@@ -1,0 +1,27 @@
+{
+  "name": "sixfinger-shield",
+  "version": "1.0.0",
+  "description": "Open-source bot detection & device recognition",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "dev": "npm run dev --workspaces --if-present"
+  },
+  "keywords": [
+    "fingerprinting",
+    "bot-detection",
+    "device-recognition"
+  ],
+  "author": "sixfingerdev",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  }
+}
