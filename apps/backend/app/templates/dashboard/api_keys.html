@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}API Keys - SixFinger Shield{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">API Keys</h1>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Your API Keys</h5>
+            </div>
+            <div class="card-body">
+                {% if keys %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Key</th>
+                                    <th>Status</th>
+                                    <th>Last Used</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for key in keys %}
+                                <tr>
+                                    <td>{{ key.name }}</td>
+                                    <td>
+                                        <code class="api-key-display">{{ key.key[:16] }}...</code>
+                                        <button class="btn btn-sm btn-link" onclick="copyToClipboard('{{ key.key }}')">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if key.is_active else 'secondary' }}">
+                                            {{ 'Active' if key.is_active else 'Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ key.last_used.strftime('%Y-%m-%d') if key.last_used else 'Never' }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-warning" onclick="toggleKey({{ key.id }})">
+                                            <i class="bi bi-{{ 'pause' if key.is_active else 'play' }}"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteKey({{ key.id }})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No API keys yet. Create one to get started!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Create New API Key</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('dashboard_blueprint.api_keys') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control", placeholder="Production API Key") }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle"></i> Create Key
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6><i class="bi bi-shield-check"></i> Security Tips</h6>
+                <ul class="small mb-0">
+                    <li>Never share your API keys</li>
+                    <li>Use different keys for different environments</li>
+                    <li>Rotate keys regularly</li>
+                    <li>Disable unused keys</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('API key copied to clipboard!');
+    });
+}
+
+function toggleKey(keyId) {
+    if (!confirm('Are you sure you want to toggle this key?')) return;
+    
+    fetch(`/dashboard/api-keys/${keyId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        location.reload();
+    });
+}
+
+function deleteKey(keyId) {
+    if (!confirm('Are you sure you want to delete this key? This action cannot be undone.')) return;
+    
+    fetch(`/dashboard/api-keys/${keyId}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        location.reload();
+    });
+}
+</script>
+{% endblock %}

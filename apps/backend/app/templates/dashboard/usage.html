@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Usage Statistics - SixFinger Shield{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Usage Statistics</h1>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Last 30 Days</h5>
+    </div>
+    <div class="card-body">
+        {% if usage_data %}
+            <canvas id="usageChart" width="400" height="100"></canvas>
+        {% else %}
+            <p class="text-muted mb-0">No usage data available yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if usage_data %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('usageChart');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ [d.date|string for d in usage_data]|tojson }},
+        datasets: [{
+            label: 'Credits Used',
+            data: {{ [d.credits_used for d in usage_data]|tojson }},
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

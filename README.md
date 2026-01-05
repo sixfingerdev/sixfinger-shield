@@ -1,6 +1,6 @@
 # 🖐️ SixFinger Shield
 
-**Open-source bot detection & device recognition.** Collects 15+ browser signals (canvas, WebGL, audio, fonts, hardware...) to generate a unique 32-char hash.
+**Open-source bot detection & device recognition with full authentication and payment system.** Collects 15+ browser signals (canvas, WebGL, audio, fonts, hardware...) to generate a unique 32-char hash.
 
 [![CI/CD Pipeline](https://github.com/sixfingerdev/sixfinger-shield/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/sixfingerdev/sixfinger-shield/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -9,10 +9,14 @@
 
 - **`@sixfinger/core`**: Single `getFingerprint()` function, client-side only
 - **15+ Browser Signals**: Canvas, WebGL, Audio, Fonts, Hardware, Screen, Browser info, Timezone, Plugins, Touch, Battery, Network, Media devices, Color depth, DNT
-- **Risk Scoring API**: FastAPI backend with PostgreSQL for bot detection
-- **Rate Limiting**: Built-in protection with slowapi and Redis
-- **Live Demo UI**: Next.js + Tailwind CSS + shadcn/ui components
-- **Full Test Coverage**: Jest, pytest, and Playwright E2E tests
+- **Flask API Backend**: Full-featured Flask application with PostgreSQL for bot detection
+- **User Authentication**: Complete signup/login system with password hashing
+- **Admin Panel**: Flask-Admin dashboard for managing users, credits, and fingerprints
+- **Credit System**: Pay-per-use API with credit balance tracking
+- **Stripe Integration**: Secure payment processing for credit purchases
+- **API Key Management**: Create and manage multiple API keys per user
+- **Rate Limiting**: Built-in protection with Flask-Limiter and Redis
+- **Live Demo UI**: Next.js 14 + TypeScript + Tailwind CSS
 - **Production Ready**: Docker + Docker Compose + Database migrations
 - **CI/CD Ready**: GitHub Actions workflow included
 
@@ -20,7 +24,7 @@
 
 **Stack:**
 - **Core**: TypeScript library
-- **Backend**: FastAPI (Python) + PostgreSQL + Redis
+- **Backend**: Flask (Python) + PostgreSQL + Redis + Stripe
 - **Frontend**: Next.js 14 + TypeScript + Tailwind CSS
 - **Infrastructure**: Docker + Docker Compose + Alembic migrations
 
@@ -33,6 +37,7 @@
 - PostgreSQL 16+
 - Redis 7+
 - Docker & Docker Compose (optional)
+- Stripe Account (for payment processing)
 
 ### Quick Start with Docker
 
@@ -41,13 +46,20 @@
 git clone https://github.com/sixfingerdev/sixfinger-shield.git
 cd sixfinger-shield
 
+# Setup environment variables
+cp .env.example .env
+# Edit .env with your database, Redis, and Stripe credentials
+
 # Start all services
 docker-compose up -d
 
-# Access the demo
+# Create admin user
+docker-compose exec backend python create_admin.py
+
+# Access the application
+# Backend: http://localhost:5000
+# Admin Panel: http://localhost:5000/admin
 # Frontend: http://localhost:3000
-# Backend API: http://localhost:8000
-# API Docs: http://localhost:8000/docs
 ```
 
 ### Manual Installation
@@ -61,7 +73,7 @@ npm run build
 npm test
 ```
 
-#### 2. Setup Backend
+#### 2. Setup Backend (Flask)
 
 ```bash
 cd apps/backend
@@ -73,12 +85,21 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Setup environment variables
+cp ../../.env.example ../../.env
+# Edit .env with your configuration
+
 # Setup database
 createdb sixfinger
 alembic upgrade head
 
-# Start server
-uvicorn app.main:app --reload
+# Create admin user
+python create_admin.py
+
+# Start Flask server
+python run.py
+# Or use Gunicorn for production:
+# gunicorn -w 4 -b 0.0.0.0:5000 "app.main:app"
 ```
 
 #### 3. Setup Frontend
@@ -91,6 +112,19 @@ npm run dev
 
 ## 🔧 Usage
 
+### Getting Started
+
+1. **Sign Up**: Visit http://localhost:5000/auth/signup
+   - Create an account (receives 100 free credits)
+   
+2. **Create API Key**: Visit http://localhost:5000/dashboard/api-keys
+   - Generate an API key for your application
+   
+3. **Purchase Credits**: Visit http://localhost:5000/payment/credits
+   - Buy credit packages via Stripe
+   
+4. **Use the API**: Submit fingerprints with your API key
+
 ### Core Library
 
 ```typescript
@@ -102,16 +136,20 @@ async function identify() {
   console.log('Hash:', result.hash); // 32-character unique hash
   console.log('Components:', result.components);
   
-  // Submit to API for risk scoring
-  const response = await fetch('http://localhost:8000/api/fingerprint', {
+  // Submit to API for risk scoring with API key
+  const response = await fetch('http://localhost:5000/api/fingerprint', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-API-Key': 'your-api-key-here'
+    },
     body: JSON.stringify(result)
   });
   
   const data = await response.json();
   console.log('Risk Score:', data.risk_score);
   console.log('Is Bot:', data.is_bot);
+  console.log('Credits Remaining:', data.credits_remaining);
 }
 
 identify();
@@ -119,7 +157,34 @@ identify();
 
 ### API Endpoints
 
-#### POST `/api/fingerprint`
+All API endpoints (except authentication) require an API key in the `X-API-Key` header.
+
+#### Authentication Endpoints
+
+**POST `/auth/signup`**
+Register a new user (receives 100 free credits)
+
+```json
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+```
+
+**POST `/auth/login`**
+User login
+
+```json
+{
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+```
+
+#### API Endpoints (Require API Key)
+
+**POST `/api/fingerprint`** (Costs 1 credit)
 Submit a fingerprint for analysis
 
 **Request:**
@@ -153,32 +218,48 @@ Submit a fingerprint for analysis
   "risk_score": 25.5,
   "is_bot": false,
   "visit_count": 1,
-  "first_seen": "2026-01-05T13:00:00Z"
+  "first_seen": "2026-01-05T13:00:00Z",
+  "credits_used": 1,
+  "credits_remaining": 99
 }
 ```
 
-#### GET `/api/fingerprint/{hash}`
+**GET `/api/fingerprint/{hash}`** (Free)
 Get fingerprint information by hash
 
-#### GET `/api/risk-score/{hash}`
+**GET `/api/risk-score/{hash}`** (Free)
 Get detailed risk analysis with factors
 
-**Response:**
-```json
-{
-  "hash": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
-  "risk_score": 75.0,
-  "is_bot": true,
-  "confidence": 0.75,
-  "factors": {
-    "webgl_missing": true,
-    "canvas_missing": true,
-    "audio_missing": true,
-    "hardware_unknown": true,
-    "no_plugins": true
-  }
-}
-```
+#### Payment Endpoints
+
+**GET `/payment/credits`**
+View credit balance and purchase options
+
+**POST `/payment/purchase`**
+Create Stripe checkout session for credit purchase
+
+**GET `/payment/history`**
+View transaction history
+
+### Credit Packages
+
+- **Starter**: 1,000 credits - $10
+- **Pro**: 5,000 credits - $40
+- **Business**: 20,000 credits - $150
+
+### Admin Panel
+
+Access the admin panel at http://localhost:5000/admin
+
+- Manage users
+- View all fingerprints
+- Monitor credit usage
+- View transactions
+- Manage API keys
+
+Default admin credentials (change after first login):
+- Email: admin@sixfinger.dev
+- Password: admin123
 
 ## 🧪 Testing
 
@@ -241,14 +322,24 @@ npm run test:e2e
 ### Environment Variables
 
 ```bash
-# Backend
+# Backend (Flask)
 DATABASE_URL=postgresql://user:pass@localhost:5432/sixfinger
 REDIS_URL=redis://localhost:6379
 SECRET_KEY=your-secret-key-here
-RATE_LIMIT=100/minute
+FLASK_ENV=production
+
+# Stripe Payment
+STRIPE_PUBLIC_KEY=pk_live_your_publishable_key
+STRIPE_SECRET_KEY=sk_live_your_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Application URLs
+BASE_URL=https://yourdomain.com
+STRIPE_SUCCESS_URL=https://yourdomain.com/payment/success?session_id={CHECKOUT_SESSION_ID}
+STRIPE_CANCEL_URL=https://yourdomain.com/payment/cancel
 
 # Frontend
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=https://yourdomain.com
 ```
 
 ### Production Deployment
@@ -257,6 +348,19 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 2. Build Docker images: `docker-compose build`
 3. Start services: `docker-compose up -d`
 4. Run migrations: `docker-compose exec backend alembic upgrade head`
+5. Create admin user: `docker-compose exec backend python create_admin.py`
+6. Configure Stripe webhook:
+   - Go to Stripe Dashboard → Webhooks
+   - Add endpoint: `https://yourdomain.com/payment/webhook`
+   - Select events: `checkout.session.completed`
+   - Copy webhook secret to `.env`
+
+### Production Server with Gunicorn
+
+```bash
+# In apps/backend directory
+gunicorn -w 4 -b 0.0.0.0:5000 "app.main:app"
+```
 
 ## 🤝 Contributing
 
