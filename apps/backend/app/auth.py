@@ -1,5 +1,6 @@
 """Authentication and authorization utilities"""
 from functools import wraps
+from datetime import datetime
 from flask import jsonify, request, session
 from flask_login import current_user
 from .models import User, APIKey, Credit, Transaction, db
@@ -23,9 +24,8 @@ def require_api_key(f):
         if not key_obj:
             return jsonify({"error": "Invalid API key"}), 401
         
-        # Update last used
-        from sqlalchemy import func
-        key_obj.last_used = func.now()
+        # Update last used with Python datetime
+        key_obj.last_used = datetime.utcnow()
         db.session.commit()
         
         # Check user is active

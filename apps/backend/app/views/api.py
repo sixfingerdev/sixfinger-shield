@@ -69,15 +69,15 @@ def submit_fingerprint():
         
         db.session.commit()
         
-        # Return response
+        # Return response with default values if decorator fails
         response = {
             "hash": fp.hash,
             "risk_score": fp.risk_score,
             "is_bot": fp.is_bot,
             "visit_count": fp.visit_count,
             "first_seen": fp.first_seen.isoformat() if fp.first_seen else None,
-            "credits_used": request.credits_used,
-            "credits_remaining": request.credits_remaining
+            "credits_used": getattr(request, 'credits_used', 0),
+            "credits_remaining": getattr(request, 'credits_remaining', 0)
         }
         
         return jsonify(response), 200

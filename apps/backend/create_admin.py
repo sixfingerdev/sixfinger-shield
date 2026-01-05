@@ -4,12 +4,20 @@ Create an admin user for SixFinger Shield Flask application
 """
 import os
 import sys
+import secrets
+import string
 
 # Add the app directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.main import create_app
 from app.models import db, User, Credit
+
+def generate_password(length=16):
+    """Generate a secure random password"""
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(secrets.choice(alphabet) for _ in range(length))
+    return password
 
 def create_admin():
     """Create admin user"""
@@ -24,7 +32,11 @@ def create_admin():
         if admin:
             print("Admin user already exists!")
             print(f"Email: admin@sixfinger.dev")
+            print("\nTo reset password, delete the user from database and run this script again.")
             return
+        
+        # Generate secure random password
+        password = generate_password()
         
         # Create admin user
         admin = User(
@@ -33,7 +45,7 @@ def create_admin():
             is_admin=True,
             is_active=True
         )
-        admin.set_password('admin123')  # Change this password!
+        admin.set_password(password)
         
         db.session.add(admin)
         db.session.flush()
@@ -51,9 +63,10 @@ def create_admin():
         
         print("✅ Admin user created successfully!")
         print(f"Email: admin@sixfinger.dev")
-        print(f"Password: admin123")
+        print(f"Password: {password}")
         print(f"Initial Credits: 10,000")
-        print("\n⚠️  IMPORTANT: Change the password after first login!")
+        print("\n⚠️  IMPORTANT: Save this password securely! It won't be shown again.")
+        print("⚠️  Change the password after first login!")
 
 if __name__ == '__main__':
     create_admin()

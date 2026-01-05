@@ -3,7 +3,11 @@ from datetime import timedelta
 
 class Config:
     """Base configuration"""
-    SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+    # Raise error if SECRET_KEY not set in production
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+        raise ValueError("SECRET_KEY environment variable must be set")
+    
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
         "postgresql://postgres:postgres@localhost:5432/sixfinger"
@@ -52,18 +56,22 @@ class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     TESTING = False
+    # Allow default SECRET_KEY in development
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
     TESTING = False
     SESSION_COOKIE_SECURE = True
+    # SECRET_KEY validation already in base Config
 
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     WTF_CSRF_ENABLED = False
+    SECRET_KEY = "test-secret-key"
 
 config = {
     "development": DevelopmentConfig,

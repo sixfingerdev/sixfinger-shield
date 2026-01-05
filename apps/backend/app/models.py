@@ -25,6 +25,10 @@ class User(db.Model, UserMixin):
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
     
     def set_password(self, password):
+        """Set user password with hashing"""
+        # Basic password validation
+        if len(password) < 8:
+            raise ValueError("Password must be at least 8 characters long")
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):

@@ -42,10 +42,11 @@ def purchase():
             return redirect(session.url, code=303)
             
         except ValueError as e:
-            flash(str(e), 'error')
+            current_app.logger.error(f"Payment error: {e}")
+            flash('Invalid package selection.', 'error')
             return redirect(url_for('payment_blueprint.credits'))
         except Exception as e:
-            current_app.logger.error(f"Payment error: {e}")
+            current_app.logger.error(f"Payment processing error: {e}")
             flash('Payment processing error. Please try again.', 'error')
             return redirect(url_for('payment_blueprint.credits'))
     

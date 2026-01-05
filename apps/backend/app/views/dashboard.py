@@ -5,6 +5,7 @@ from ..models import Credit, Transaction, APIKey, Fingerprint, db
 from ..auth import generate_api_key
 from ..forms import APIKeyForm
 from sqlalchemy import func
+from datetime import timedelta, datetime
 
 dashboard_bp = Blueprint('dashboard_blueprint', __name__)
 
@@ -98,14 +99,16 @@ def toggle_api_key(key_id):
 @login_required
 def usage():
     """View detailed usage statistics"""
-    # Get usage by day (last 30 days)
+    # Get usage by day (last 30 days) - PostgreSQL compatible
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    
     usage_data = db.session.query(
         func.date(Transaction.created_at).label('date'),
         func.sum(Transaction.amount).label('credits_used')
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.transaction_type == 'usage',
-        Transaction.created_at >= func.date('now', '-30 days')
+        Transaction.created_at >= thirty_days_ago
     ).group_by(func.date(Transaction.created_at)).all()
     
     return render_template('dashboard/usage.html', usage_data=usage_data)

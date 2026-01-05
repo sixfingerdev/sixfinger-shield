@@ -43,6 +43,12 @@ def create_app(config_name=None):
     def load_user(user_id):
         return User.query.get(int(user_id))
     
+    # Context processor for templates
+    @app.context_processor
+    def inject_now():
+        from datetime import datetime
+        return {'now': datetime.now()}
+    
     # Register blueprints
     from .views.auth import auth_bp
     from .views.api import api_bp
@@ -88,4 +94,7 @@ def create_app(config_name=None):
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import os
+    # Use FLASK_DEBUG environment variable (Flask 2.2+)
+    debug = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.run(debug=debug, host='0.0.0.0', port=5000)
