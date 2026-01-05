@@ -6,9 +6,14 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+
 jobs:
   test-core:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -31,6 +36,8 @@ jobs:
 
   test-backend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:16
@@ -67,6 +74,8 @@ jobs:
 
   test-frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -92,6 +101,8 @@ jobs:
 
   docker-build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [test-core, test-backend, test-frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
