@@ -1,8 +1,7 @@
 """Dashboard views"""
 from flask import Blueprint, render_template, jsonify, request
 from flask_login import login_required, current_user
-from ..models import Credit, Transaction, APIKey, Fingerprint
-from ..database import db
+from ..models import Credit, Transaction, APIKey, Fingerprint, db
 from ..auth import generate_api_key
 from ..forms import APIKeyForm
 from sqlalchemy import func

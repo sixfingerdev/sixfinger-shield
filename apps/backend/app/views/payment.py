@@ -1,8 +1,7 @@
 """Payment and credit management views"""
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from ..models import Credit, Transaction
-from ..database import db
+from ..models import Credit, Transaction, db
 from ..forms import CreditPurchaseForm
 from ..payments import create_checkout_session, handle_successful_payment, verify_webhook_signature
 import stripe

@@ -1,8 +1,7 @@
 """Stripe payment integration"""
 import stripe
 from flask import current_app
-from .models import User, Credit, Transaction
-from .database import db
+from .models import User, Credit, Transaction, db
 
 def init_stripe():
     """Initialize Stripe with API key"""

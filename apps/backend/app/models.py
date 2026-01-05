@@ -1,11 +1,13 @@
 from flask_login import UserMixin
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from werkzeug.security import generate_password_hash, check_password_hash
-from .database import Base
 
-class User(Base, UserMixin):
+db = SQLAlchemy()
+
+class User(db.Model, UserMixin):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -31,7 +33,7 @@ class User(Base, UserMixin):
     def __repr__(self):
         return f"<User {self.username}>"
 
-class Credit(Base):
+class Credit(db.Model):
     __tablename__ = "credits"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -46,7 +48,7 @@ class Credit(Base):
     def __repr__(self):
         return f"<Credit user_id={self.user_id} balance={self.balance}>"
 
-class Transaction(Base):
+class Transaction(db.Model):
     __tablename__ = "transactions"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -62,7 +64,7 @@ class Transaction(Base):
     def __repr__(self):
         return f"<Transaction {self.transaction_type} amount={self.amount}>"
 
-class APIKey(Base):
+class APIKey(db.Model):
     __tablename__ = "api_keys"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -78,7 +80,7 @@ class APIKey(Base):
     def __repr__(self):
         return f"<APIKey {self.name}>"
 
-class Fingerprint(Base):
+class Fingerprint(db.Model):
     __tablename__ = "fingerprints"
 
     id = Column(Integer, primary_key=True, index=True)

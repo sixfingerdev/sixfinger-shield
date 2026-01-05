@@ -7,8 +7,7 @@ from flask_limiter.util import get_remote_address
 from flask_cors import CORS
 
 from .config import get_config
-from .database import db
-from .models import User
+from .models import db, User
 from .admin import init_admin
 
 # Initialize extensions

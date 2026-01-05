@@ -2,8 +2,7 @@
 from functools import wraps
 from flask import jsonify, request, session
 from flask_login import current_user
-from .models import User, APIKey, Credit
-from .database import db
+from .models import User, APIKey, Credit, Transaction, db
 import secrets
 
 def generate_api_key():
@@ -25,7 +24,8 @@ def require_api_key(f):
             return jsonify({"error": "Invalid API key"}), 401
         
         # Update last used
-        key_obj.last_used = db.func.now()
+        from sqlalchemy import func
+        key_obj.last_used = func.now()
         db.session.commit()
         
         # Check user is active
@@ -64,7 +64,6 @@ def require_credits(cost=1):
             credit.total_used += cost
             
             # Record transaction
-            from .models import Transaction
             transaction = Transaction(
                 user_id=user.id,
                 amount=-cost,

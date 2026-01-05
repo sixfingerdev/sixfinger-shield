@@ -1,7 +1,6 @@
 """API endpoints for fingerprint analysis"""
 from flask import Blueprint, request, jsonify, current_app
-from ..models import Fingerprint
-from ..database import db
+from ..models import Fingerprint, db
 from ..risk_scoring import calculate_risk_score
 from ..auth import require_api_key, require_credits
 from ..schemas import FingerprintRequest, FingerprintResponse, RiskScoreResponse

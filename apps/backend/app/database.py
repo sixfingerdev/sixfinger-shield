@@ -1,8 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.ext.declarative import declarative_base
-
-db = SQLAlchemy()
-Base = declarative_base()
+"""Database configuration - import db from models"""
+# For backward compatibility
+from .models import db
 
 def init_db(app):
     """Initialize database with Flask app"""
