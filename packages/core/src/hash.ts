@@ -29,9 +29,10 @@ function simpleHash(str: string): string {
     hash = hash & hash;
   }
   
-  // Convert to hex and pad to 64 chars (32 bytes)
-  const hex = Math.abs(hash).toString(16);
-  return hex.padStart(64, '0').substring(0, 64);
+  // Convert to hex and ensure exactly 64 chars for consistency with SHA-256
+  const hex = Math.abs(hash).toString(16).padStart(16, '0');
+  // Repeat to create 64 chars, then we'll substring to 32 in generateHash
+  return (hex + hex + hex + hex).substring(0, 64);
 }
 
 /**

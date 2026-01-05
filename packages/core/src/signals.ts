@@ -93,8 +93,17 @@ export function getAudioFingerprint(): string {
     
     const fingerprint = `${context.sampleRate}_${analyser.fftSize}`;
     
-    oscillator.stop();
-    context.close();
+    // Proper cleanup to prevent memory leaks
+    try {
+      oscillator.stop();
+      oscillator.disconnect();
+      analyser.disconnect();
+      scriptProcessor.disconnect();
+      gainNode.disconnect();
+      context.close();
+    } catch (cleanupError) {
+      // Ignore cleanup errors
+    }
 
     return fingerprint;
   } catch (e) {
