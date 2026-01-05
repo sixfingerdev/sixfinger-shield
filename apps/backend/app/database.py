@@ -1,16 +1,11 @@
-from sqlalchemy import create_engine
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from .config import settings
 
-engine = create_engine(settings.DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
+db = SQLAlchemy()
 Base = declarative_base()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def init_db(app):
+    """Initialize database with Flask app"""
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()

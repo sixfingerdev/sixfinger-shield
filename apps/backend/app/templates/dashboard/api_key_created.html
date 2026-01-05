@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}API Key Created - SixFinger Shield{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle"></i> API Key Created Successfully</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Important:</strong> Copy your API key now. You won't be able to see it again!
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Your API Key:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="apiKey" value="{{ api_key.key }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyKey()">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Key Name:</label>
+                    <p class="form-control-plaintext">{{ api_key.name }}</p>
+                </div>
+                
+                <hr>
+                
+                <h6>Usage Example:</h6>
+                <pre class="bg-light p-3"><code>curl -X POST https://api.sixfinger.dev/api/fingerprint \
+  -H "X-API-Key: {{ api_key.key }}" \
+  -H "Content-Type: application/json" \
+  -d '{"hash": "...", "components": {...}}'</code></pre>
+                
+                <div class="mt-3">
+                    <a href="{{ url_for('dashboard_blueprint.api_keys') }}" class="btn btn-primary">
+                        Go to API Keys
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyKey() {
+    const keyInput = document.getElementById('apiKey');
+    keyInput.select();
+    navigator.clipboard.writeText(keyInput.value);
+    alert('API key copied to clipboard!');
+}
+</script>
+{% endblock %}

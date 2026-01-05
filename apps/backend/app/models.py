@@ -1,6 +1,82 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
+from flask_login import UserMixin
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, ForeignKey, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from werkzeug.security import generate_password_hash, check_password_hash
 from .database import Base
+
+class User(Base, UserMixin):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    username = Column(String(100), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    is_admin = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    credits = relationship("Credit", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
+    api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def __repr__(self):
+        return f"<User {self.username}>"
+
+class Credit(Base):
+    __tablename__ = "credits"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    balance = Column(Integer, default=0)
+    total_purchased = Column(Integer, default=0)
+    total_used = Column(Integer, default=0)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    user = relationship("User", back_populates="credits")
+    
+    def __repr__(self):
+        return f"<Credit user_id={self.user_id} balance={self.balance}>"
+
+class Transaction(Base):
+    __tablename__ = "transactions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    amount = Column(Integer, nullable=False)
+    transaction_type = Column(String(50), nullable=False)  # 'purchase', 'usage', 'refund'
+    description = Column(Text, nullable=True)
+    stripe_payment_id = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    user = relationship("User", back_populates="transactions")
+    
+    def __repr__(self):
+        return f"<Transaction {self.transaction_type} amount={self.amount}>"
+
+class APIKey(Base):
+    __tablename__ = "api_keys"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    key = Column(String(64), unique=True, index=True, nullable=False)
+    name = Column(String(100), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_used = Column(DateTime(timezone=True), nullable=True)
+    
+    user = relationship("User", back_populates="api_keys")
+    
+    def __repr__(self):
+        return f"<APIKey {self.name}>"
 
 class Fingerprint(Base):
     __tablename__ = "fingerprints"
