@@ -101,7 +101,7 @@ describe('getFingerprint', () => {
 
   it('should handle missing APIs gracefully', async () => {
     // Remove some APIs
-    global.window.AudioContext = undefined;
+    (global.window as any).AudioContext = undefined;
     (global.navigator as any).mediaDevices = undefined;
 
     const result = await getFingerprint();

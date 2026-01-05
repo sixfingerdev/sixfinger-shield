@@ -263,6 +263,7 @@ export function getColorDepthFingerprint(): string {
  */
 export function getDoNotTrackFingerprint(): string {
   const nav = navigator as any;
-  const dnt = nav.doNotTrack || nav.msDoNotTrack || window.doNotTrack;
+  const win = window as any;
+  const dnt = nav.doNotTrack || nav.msDoNotTrack || win.doNotTrack;
   return String(dnt || 'unknown');
 }

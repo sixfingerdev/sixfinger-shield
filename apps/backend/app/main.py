@@ -5,14 +5,11 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from .database import engine, get_db, Base
+from .database import get_db
 from .models import Fingerprint
 from .schemas import FingerprintRequest, FingerprintResponse, RiskScoreResponse
 from .risk_scoring import calculate_risk_score
 from .config import settings
-
-# Create tables
-Base.metadata.create_all(bind=engine)
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -22,6 +19,11 @@ app = FastAPI(
     description="Bot detection & device recognition API",
     version=settings.API_VERSION
 )
+
+@app.on_event("startup")
+def startup_event():
+    from .database import engine, Base
+    Base.metadata.create_all(bind=engine)
 
 # Add rate limit exception handler
 app.state.limiter = limiter
